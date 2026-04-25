@@ -687,6 +687,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   position: absolute;
   inset: 0;
   pointer-events: none;
+  touch-action: none;
 }
 
 .arrange-overlay-svg .handle {
@@ -1919,10 +1920,11 @@ const DEFAULT_TRANSFORMS = {
 };
 
 function getTransform(part, partSet, choSet, jungSet, jongSet) {
-  // 사용자가 조정한 값이 있으면 우선
+  // 사용자가 조정한 값이 있으면 우선 (sx가 defined인지 확인 → 빈 객체 {}를 유효한 값으로 오인하는 버그 방지)
   const caseKey = makeCaseKey(choSet, jungSet, jongSet);
-  if (arrangeStore[caseKey] && arrangeStore[caseKey][part]) {
-    return arrangeStore[caseKey][part];
+  const stored = arrangeStore[caseKey] && arrangeStore[caseKey][part];
+  if (stored && stored.sx !== undefined) {
+    return stored;
   }
   return DEFAULT_TRANSFORMS[part][partSet];
 }
