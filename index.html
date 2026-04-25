@@ -2677,10 +2677,10 @@ function transformPath(strokeData, t) {
         const p = b[i];
         d += `C${(p_prev.cp2.x * t.sx + t.x).toFixed(1)},${(p_prev.cp2.y * t.sy + t.y).toFixed(1)} ${(p.cp1.x * t.sx + t.x).toFixed(1)},${(p.cp1.y * t.sy + t.y).toFixed(1)} ${(p.x * t.sx + t.x).toFixed(1)},${(p.y * t.sy + t.y).toFixed(1)} `;
       }
-      const w = stroke.width * Math.min(t.sx, t.sy);
+      const w = stroke.width;
       svgParts += `<path d="${d}" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
     } else if (stroke.points && stroke.points.length > 0) {
-      const w = stroke.width * Math.min(t.sx, t.sy);
+      const w = stroke.width;
       if (stroke.points.length === 1) {
         const [x, y] = stroke.points[0];
         const cx = x * t.sx + t.x;
@@ -2966,7 +2966,7 @@ function drawArrangeCanvas() {
     let bbox = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
 
     for (const stroke of data.strokes) {
-      const w = stroke.width * Math.min(t.sx, t.sy) * k;
+      const w = stroke.width * k;
       arrangeCtx.lineWidth = w;
 
       if (stroke.bezier && stroke.bezier.length > 0) {
@@ -3765,7 +3765,7 @@ function setupExportControls() {
 function strokesToOpenTypePath(strokeData, t) {
   const path = new opentype.Path();
   for (const stroke of strokeData.strokes) {
-    const w = stroke.width * Math.min(t.sx, t.sy);
+    const w = stroke.width;
     const r = w / 2;
 
     let samples;
