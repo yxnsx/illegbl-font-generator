@@ -3197,21 +3197,21 @@ function setupArrangeSliders() {
       if (!arrangeSelected || !arrangeCurrentCase) return;
       const cc = arrangeCurrentCase;
       const caseKey = makeCaseKey(cc.choSet, cc.jungSet, cc.jongSet);
+      const setMap = { cho: cc.choSet, jung: cc.jungSet, jong: cc.jongSet };
+
+      // arrangeStore에 없거나 불완전하면 현재 transform 값(기본값 또는 저장값)으로 초기화
       if (!arrangeStore[caseKey]) arrangeStore[caseKey] = {};
-      if (!arrangeStore[caseKey][arrangeSelected]) arrangeStore[caseKey][arrangeSelected] = {};
+      if (!arrangeStore[caseKey][arrangeSelected] || arrangeStore[caseKey][arrangeSelected].sx === undefined) {
+        arrangeStore[caseKey][arrangeSelected] = { ...getTransform(arrangeSelected, setMap[arrangeSelected], cc.choSet, cc.jungSet, cc.jongSet) };
+      }
 
       const t = arrangeStore[caseKey][arrangeSelected];
-      const setMap = { cho: cc.choSet, jung: cc.jungSet, jong: cc.jongSet };
-      const orig = getTransform(arrangeSelected, setMap[arrangeSelected], cc.choSet, cc.jungSet, cc.jongSet);
-
-      t.x = orig.x; t.y = orig.y; t.sx = orig.sx; t.sy = orig.sy;
       const v = parseFloat(document.getElementById(id).value);
       if (id === 'posX') t.x = v;
       else if (id === 'posY') t.y = v;
       else if (id === 'posSx') t.sx = v / 100;
       else if (id === 'posSy') t.sy = v / 100;
 
-      arrangeStore[caseKey][arrangeSelected] = t;
       drawArrangeCanvas();
       updateArrangeSelectedUI();
     });
