@@ -2728,14 +2728,14 @@ function composeSyllableSVG(char) {
     if (jongData) parts += transformPath(jongData, getTransform('jong', jongSet, choSet, jungSet, jongSet));
 
     if (!parts) return null;
-    return `<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" class="live-char-svg">${parts}</svg>`;
+    return `<svg viewBox="-100 -100 1200 1200" xmlns="http://www.w3.org/2000/svg" class="live-char-svg">${parts}</svg>`;
   }
 
   // 라틴/특수
   const data = latinStore[char];
   if (data) {
     const parts = transformPath(data, { x: 0, y: 0, sx: 1, sy: 1 });
-    return `<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" class="live-char-svg">${parts}</svg>`;
+    return `<svg viewBox="-100 -100 1200 1200" xmlns="http://www.w3.org/2000/svg" class="live-char-svg">${parts}</svg>`;
   }
 
   return null;
@@ -2845,6 +2845,8 @@ function switchPage(pageName) {
 // ============================================================
 // 15. 위치 조정 페이지
 // ============================================================
+const ARRANGE_PAD = 40;
+const ARRANGE_K = (500 - 2 * ARRANGE_PAD) / EM_SIZE; // EM → 캔버스 좌표 변환 (여백 포함)
 let arrangeCurrentCase = null; // { choSet, jungSet, jongSet }
 let arrangeSelected = null; // 'cho' | 'jung' | 'jong'
 
@@ -2954,8 +2956,8 @@ function drawArrangeCanvas() {
   function drawJasoOnCanvas(part, partSet, data, color) {
     if (!data) return null;
     const t = getTransform(part, partSet, cc.choSet, cc.jungSet, cc.jongSet);
-    // EM(1000) → 캔버스(500) 좌표로 변환
-    const k = 500 / EM_SIZE;
+    // EM(1000) → 캔버스(500) 좌표로 변환 (여백 포함)
+    const toAC = em => em * ARRANGE_K + ARRANGE_PAD;
 
     arrangeCtx.strokeStyle = color || '#1a1410';
     arrangeCtx.fillStyle = color || '#1a1410';
@@ -2965,24 +2967,24 @@ function drawArrangeCanvas() {
     let bbox = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
 
     for (const stroke of data.strokes) {
-      const w = stroke.width * k;
+      const w = stroke.width * ARRANGE_K;
       arrangeCtx.lineWidth = w;
 
       if (stroke.bezier && stroke.bezier.length > 0) {
         const b = stroke.bezier;
         arrangeCtx.beginPath();
-        const x0 = (b[0].x * t.sx + t.x) * k;
-        const y0 = (b[0].y * t.sy + t.y) * k;
+        const x0 = toAC(b[0].x * t.sx + t.x);
+        const y0 = toAC(b[0].y * t.sy + t.y);
         arrangeCtx.moveTo(x0, y0);
         bbox.minX = Math.min(bbox.minX, x0); bbox.maxX = Math.max(bbox.maxX, x0);
         bbox.minY = Math.min(bbox.minY, y0); bbox.maxY = Math.max(bbox.maxY, y0);
         for (let i = 1; i < b.length; i++) {
-          const cx1 = (b[i-1].cp2.x * t.sx + t.x) * k;
-          const cy1 = (b[i-1].cp2.y * t.sy + t.y) * k;
-          const cx2 = (b[i].cp1.x * t.sx + t.x) * k;
-          const cy2 = (b[i].cp1.y * t.sy + t.y) * k;
-          const x = (b[i].x * t.sx + t.x) * k;
-          const y = (b[i].y * t.sy + t.y) * k;
+          const cx1 = toAC(b[i-1].cp2.x * t.sx + t.x);
+          const cy1 = toAC(b[i-1].cp2.y * t.sy + t.y);
+          const cx2 = toAC(b[i].cp1.x * t.sx + t.x);
+          const cy2 = toAC(b[i].cp1.y * t.sy + t.y);
+          const x = toAC(b[i].x * t.sx + t.x);
+          const y = toAC(b[i].y * t.sy + t.y);
           arrangeCtx.bezierCurveTo(cx1, cy1, cx2, cy2, x, y);
           bbox.minX = Math.min(bbox.minX, x); bbox.maxX = Math.max(bbox.maxX, x);
           bbox.minY = Math.min(bbox.minY, y); bbox.maxY = Math.max(bbox.maxY, y);
@@ -2991,8 +2993,8 @@ function drawArrangeCanvas() {
       } else if (stroke.points && stroke.points.length > 0) {
         arrangeCtx.beginPath();
         const pts = stroke.points;
-        const x0 = (pts[0][0] * t.sx + t.x) * k;
-        const y0 = (pts[0][1] * t.sy + t.y) * k;
+        const x0 = toAC(pts[0][0] * t.sx + t.x);
+        const y0 = toAC(pts[0][1] * t.sy + t.y);
         arrangeCtx.moveTo(x0, y0);
         bbox.minX = Math.min(bbox.minX, x0); bbox.maxX = Math.max(bbox.maxX, x0);
         bbox.minY = Math.min(bbox.minY, y0); bbox.maxY = Math.max(bbox.maxY, y0);
@@ -3001,8 +3003,8 @@ function drawArrangeCanvas() {
           arrangeCtx.fill();
         } else {
           for (let i = 1; i < pts.length; i++) {
-            const x = (pts[i][0] * t.sx + t.x) * k;
-            const y = (pts[i][1] * t.sy + t.y) * k;
+            const x = toAC(pts[i][0] * t.sx + t.x);
+            const y = toAC(pts[i][1] * t.sy + t.y);
             arrangeCtx.lineTo(x, y);
             bbox.minX = Math.min(bbox.minX, x); bbox.maxX = Math.max(bbox.maxX, x);
             bbox.minY = Math.min(bbox.minY, y); bbox.maxY = Math.max(bbox.maxY, y);
@@ -3022,7 +3024,7 @@ function drawArrangeCanvas() {
   if (cc.jongChar) arrangeBboxes.jong = drawJasoOnCanvas('jong', cc.jongSet, jongData, arrangeSelected === 'jong' ? '#c2412e' : '#1a1410');
 
   // 가이드: 음절 박스
-  svgHtml += `<rect x="25" y="25" width="450" height="450" fill="none" stroke="rgba(194,65,46,0.15)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  svgHtml += `<rect x="${ARRANGE_PAD}" y="${ARRANGE_PAD}" width="${500 - 2 * ARRANGE_PAD}" height="${500 - 2 * ARRANGE_PAD}" fill="none" stroke="rgba(194,65,46,0.15)" stroke-width="1" stroke-dasharray="3 3"/>`;
 
   // 클릭 가능한 영역 (바운딩 박스) — 핸들보다 먼저 그려서 z-order 아래에 위치
   for (const part of ['cho', 'jung', 'jong']) {
@@ -3102,10 +3104,10 @@ function arrangeStartResize(e, handle) {
 
   const tch = e.touches ? e.touches[0] : e;
   const rect = arrangeCanvas.getBoundingClientRect();
-  // bbox는 canvas픽셀(0-500) 기준이므로 EM으로 변환 (×2)
+  // bbox는 canvas픽셀 기준이므로 EM으로 변환
   const b = arrangeBboxes[arrangeSelected];
-  const origBboxW = b ? (b.maxX - b.minX) * (EM_SIZE / 500) : t.sx * 400;
-  const origBboxH = b ? (b.maxY - b.minY) * (EM_SIZE / 500) : t.sy * 400;
+  const origBboxW = b ? (b.maxX - b.minX) / ARRANGE_K : t.sx * 400;
+  const origBboxH = b ? (b.maxY - b.minY) / ARRANGE_K : t.sy * 400;
   arrangeDragState = {
     mode: 'resize',
     handle: handle,
